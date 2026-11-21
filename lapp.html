@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Öppna din tomtelapp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fbf6ee; --card: #fff; --ink: #2a1d1a; --muted: #7a6a63;
+    --red: #b3262e; --red-dark: #8c1c23; --green: #1f5c45; --line: #eadfd2; --gold: #c9973b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(179,38,46,.07) 0 120px, transparent 121px),
+      radial-gradient(circle at 92% 30%, rgba(31,92,69,.07) 0 160px, transparent 161px);
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 36px 18px 60px; text-align: center; position: relative; z-index: 1; }
+  h1 { font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 2rem; color: var(--red); margin: 0 0 8px; }
+  .lead { color: var(--muted); line-height: 1.5; margin: 0 0 22px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; text-align: left; }
+  .step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; color: var(--muted); line-height: 1.45; }
+  .step b { color: var(--ink); }
+  .num {
+    flex: 0 0 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff;
+    display: grid; place-items: center; font-weight: 600; font-size: .9rem;
+  }
+  textarea {
+    width: 100%; font: inherit; font-size: 1rem; padding: 14px; border: 2px dashed var(--gold); border-radius: 12px;
+    background: #fffdfa; color: var(--ink); min-height: 96px; resize: vertical; margin: 6px 0 12px;
+  }
+  textarea:focus { outline: none; border-style: solid; }
+  button {
+    font: inherit; font-weight: 600; border: 0; border-radius: 12px; cursor: pointer;
+    padding: 15px; width: 100%; font-size: 1.1rem; background: var(--red); color: #fff;
+  }
+  button:hover { background: var(--red-dark); }
+  button.ghost { background: transparent; color: var(--muted); font-size: .95rem; padding: 8px; width: auto; }
+  .error { color: var(--red); font-size: .9rem; min-height: 1.2em; margin-top: 10px; text-align: center; }
+  .hidden { display: none !important; }
+
+  .hello { font-family: Fraunces, serif; font-size: 1.6rem; margin: 10px 0 6px; }
+  .details { color: var(--muted); line-height: 1.7; }
+  .gift { width: 200px; height: 200px; margin: 30px auto; position: relative; cursor: pointer; transition: transform .2s; }
+  .gift:hover { transform: rotate(-3deg) scale(1.03); }
+  .gift .box { position: absolute; bottom: 0; left: 15px; right: 15px; height: 130px; background: var(--red); border-radius: 8px; }
+  .gift .lid { position: absolute; top: 40px; left: 0; right: 0; height: 40px; background: var(--red-dark); border-radius: 8px; }
+  .gift .ribbon-v { position: absolute; top: 40px; bottom: 0; left: 50%; width: 24px; margin-left: -12px; background: var(--gold); }
+  .gift .bow { position: absolute; top: 8px; left: 50%; margin-left: -30px; width: 60px; height: 36px; }
+  .gift .bow::before, .gift .bow::after {
+    content: ""; position: absolute; top: 0; width: 30px; height: 30px; border: 7px solid var(--gold); border-radius: 50% 50% 0 50%;
+  }
+  .gift .bow::before { left: 0; transform: rotate(-20deg); }
+  .gift .bow::after { right: 0; transform: rotate(110deg); }
+  .gift.open .lid, .gift.open .bow, .gift.open .ribbon-v { transform: translateY(-60px) rotate(-12deg); opacity: 0; transition: all .5s; }
+  .name-big { font-family: Fraunces, serif; font-weight: 800; font-size: 2.6rem; color: var(--green); margin: 10px 0 18px; animation: pop .5s ease; }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .secret-note { font-size: .85rem; color: var(--muted); margin-top: 26px; }
+  .snow { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .snow span { position: absolute; top: -10px; color: #d9cfc4; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translateY(105vh); } }
+</style>
+</head>
+<body>
+<div class="snow" id="snow"></div>
+<main>
+
+  <!-- ========== KLISTRA IN KODEN ========== -->
+  <section id="pasteView">
+    <div style="font-size:3rem">🎅</div>
+    <h1>Öppna din tomtelapp</h1>
+    <p class="lead">Här ser du vem du är hemlig tomte åt. Ingen annan kan se det.</p>
+
+    <div class="card">
+      <div class="step"><span class="num">1</span><span>Kopiera <b>koden</b> eller <b>länken</b> från meddelandet du fått.</span></div>
+      <div class="step"><span class="num">2</span><span>Klistra in den i rutan nedan.</span></div>
+      <textarea id="codeInput" placeholder="Klistra in här…" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+      <button id="openButton">🎁 Öppna min lapp</button>
+      <div class="error" id="error"></div>
+    </div>
+  </section>
+
+  <!-- ========== AVSLÖJANDE ========== -->
+  <section id="revealView" class="hidden">
+    <div class="hello" id="helloText"></div>
+    <div class="details" id="eventText"></div>
+    <div class="gift" id="gift" title="Tryck för att öppna">
+      <div class="box"></div><div class="ribbon-v"></div><div class="lid"></div><div class="bow"></div>
+    </div>
+    <p id="tapText" class="details">Tryck på paketet för att se vem du är tomte åt</p>
+    <div id="answer" class="hidden">
+      <div class="details">Du ska köpa julklapp till</div>
+      <div class="name-big" id="recipientName"></div>
+      <div class="details" id="extraDetails"></div>
+      <p class="secret-note">🤫 Håll det hemligt! Du kan öppna lappen igen om du glömmer.</p>
+    </div>
+    <p style="margin-top:24px"><button class="ghost" id="backButton">Öppna en annan lapp</button></p>
+  </section>
+
+</main>
+<script>
+// ---------- Avkodning (samma nyckel som i lottningsappen) ----------
+const SECRET_KEY = "jultomtenkommer";
+
+function decodeSecret(text) {
+  // Plocka ut koden ur det som klistrats in: "t" följt av hexsiffror.
+  // Fungerar både om man klistrar in hela sms:et, länken eller bara koden.
+  const match = String(text).match(/\bt([0-9a-f]{20,})\b/i);
+  if (!match) return null;
+  const hex = match[1];
+  if (hex.length % 2 !== 0) return null;
+
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    const mixed = parseInt(hex.substr(i * 2, 2), 16);
+    bytes[i] = mixed ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length) ^ (i * 7 % 256);
+  }
+  try {
+    const data = JSON.parse(new TextDecoder().decode(bytes));
+    return data && data.g && data.r ? data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ---------- Visa lappen ----------
+function showReveal(data) {
+  document.getElementById("pasteView").classList.add("hidden");
+  document.getElementById("revealView").classList.remove("hidden");
+  document.getElementById("helloText").textContent = `Hej ${data.g}! 🎅`;
+  document.getElementById("eventText").textContent = data.e || "Du är med i hemliga tomten";
+  document.getElementById("recipientName").textContent = data.r;
+
+  const extras = [];
+  if (data.b) extras.push(`Budget: ${data.b}`);
+  if (data.d) extras.push(`När: ${data.d}`);
+  document.getElementById("extraDetails").textContent = extras.join(" · ");
+
+  const gift = document.getElementById("gift");
+  gift.classList.remove("open");
+  document.getElementById("answer").classList.add("hidden");
+  document.getElementById("tapText").classList.remove("hidden");
+  gift.onclick = () => {
+    if (!gift.classList.contains("open")) {
+      if (window.countTomteEvent) window.countTomteEvent("paket-oppnat", "Paket öppnat (sms)");
+    }
+    gift.classList.add("open");
+    document.getElementById("tapText").classList.add("hidden");
+    document.getElementById("answer").classList.remove("hidden");
+  };
+  window.scrollTo(0, 0);
+}
+
+function showPaste() {
+  document.getElementById("revealView").classList.add("hidden");
+  document.getElementById("pasteView").classList.remove("hidden");
+  document.getElementById("codeInput").value = "";
+  document.getElementById("error").textContent = "";
+}
+
+function openFromInput() {
+  const data = decodeSecret(document.getElementById("codeInput").value);
+  if (data) {
+    showReveal(data);
+  } else {
+    document.getElementById("error").textContent = "Hittade ingen giltig kod. Kopiera hela koden som börjar med ”t” och försök igen.";
+  }
+}
+
+function route() {
+  const data = location.hash ? decodeSecret(location.hash.slice(1)) : null;
+  if (data) showReveal(data); else showPaste();
+}
+
+// ---------- Start ----------
+document.getElementById("openButton").onclick = openFromInput;
+// Öppna direkt när något klistras in
+document.getElementById("codeInput").addEventListener("paste", () => setTimeout(() => {
+  if (decodeSecret(document.getElementById("codeInput").value)) openFromInput();
+}, 50));
+document.getElementById("backButton").onclick = () => {
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  showPaste();
+};
+window.addEventListener("hashchange", route);
+
+const snow = document.getElementById("snow");
+for (let i = 0; i < 18; i++) {
+  const flake = document.createElement("span");
+  flake.textContent = "❄";
+  flake.style.left = Math.random() * 100 + "%";
+  flake.style.fontSize = (8 + Math.random() * 10) + "px";
+  flake.style.animationDuration = (8 + Math.random() * 10) + "s";
+  flake.style.animationDelay = (-Math.random() * 15) + "s";
+  snow.appendChild(flake);
+}
+
+route();
+</script>
+<script type="module" src="js/statistik.js"></script>
+</body>
+</html>
