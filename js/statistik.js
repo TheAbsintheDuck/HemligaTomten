@@ -12,7 +12,7 @@
 // Ditt kontonamn på goatcounter.com. Är adressen till din statistik
 // https://hemliga-tomten.goatcounter.com så skriver du "hemliga-tomten".
 // Lämna som det är för att stänga av statistiken.
-const GOATCOUNTER_CODE = "DITT-KONTONAMN";
+const GOATCOUNTER_CODE = "theabsintheduck";
 
 // #endregion
 
