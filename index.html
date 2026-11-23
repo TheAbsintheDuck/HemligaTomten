@@ -200,7 +200,10 @@
       <h2>Deltagare</h2>
       <p class="hint" style="margin:-6px 0 12px">Personer med samma <b>hushåll</b> drar inte varandra (bra för par). Lämna tomt om det inte spelar någon roll. Telefonnumret används bara för att skicka sms:et och sparas bara på din telefon.</p>
       <div id="people"></div>
-      <button class="secondary" id="addPerson">+ Lägg till person</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="secondary" id="addPerson">+ Lägg till person</button>
+        <button class="secondary hidden" id="pickContacts">📇 Välj från kontakter</button>
+      </div>
     </div>
 
     <button class="big" id="drawButton">🎁 Lotta!</button>
@@ -295,6 +298,109 @@ function decodeSecret(code) {
     return null;
   }
 }
+
+// #region Kontakter
+
+// Contact Picker API låter en välja personer ur telefonens kontaktbok.
+// Det finns bara i Chrome (och några andra webbläsare) på Android, och kräver
+// https. Annars visas ingen knapp och man skriver in namnen själv.
+function canPickContacts() {
+  return "contacts" in navigator && "ContactsManager" in window;
+}
+
+// Öppnar telefonens kontaktlista. Måste anropas direkt från ett tryck på en knapp.
+// Returnerar en lista med { name, phone }. Tom lista om man backar ut.
+async function pickContacts() {
+  const picked = await navigator.contacts.select(["name", "tel"], { multiple: true });
+  const people = [];
+  const seenNames = new Set();
+
+  for (const contact of picked) {
+    const name = firstOrEmpty(contact.name).trim();
+    if (!name || seenNames.has(name.toLowerCase())) {
+      continue;   // kontakter utan namn och dubbletter hoppas över
+    }
+    seenNames.add(name.toLowerCase());
+    people.push({ name: name, phone: pickPhone(contact.tel || []) });
+  }
+  return people;
+}
+
+function firstOrEmpty(list) {
+  if (list && list.length > 0) {
+    return String(list[0]);
+  }
+  return "";
+}
+
+// En kontakt kan ha flera nummer. Ett mobilnummer passar bäst för sms, så ett
+// svenskt mobilnummer (070, 072, 073, 076, 079 eller +467...) väljs först.
+// Finns inget sådant tas det första numret.
+function pickPhone(numbers) {
+  const cleanNumbers = numbers.map(number => String(number).trim()).filter(number => number !== "");
+  if (cleanNumbers.length === 0) {
+    return "";
+  }
+  for (const number of cleanNumbers) {
+    if (isSwedishMobile(number)) {
+      return number;
+    }
+  }
+  return cleanNumbers[0];
+}
+
+function isSwedishMobile(number) {
+  const digits = number.replace(/[^\d+]/g, "");
+  return /^(\+467|00467|07)\d{7,8}$/.test(digits);
+}
+
+// Raden är helt tom om varken namn, nummer eller hushåll är ifyllda.
+function findEmptyRow() {
+  for (const row of peopleBox.querySelectorAll(".person")) {
+    const isEmpty = row.querySelector(".p-name").value.trim() === ""
+      && row.querySelector(".p-phone").value.trim() === ""
+      && row.querySelector(".p-house").value.trim() === "";
+    if (isEmpty) {
+      return row;
+    }
+  }
+  return null;
+}
+
+// Lägger in de valda kontakterna i formuläret. Tomma rader fylls först,
+// och den som redan finns i listan läggs inte till igen.
+async function onPickContacts() {
+  const errorBox = document.getElementById("setupError");
+  errorBox.textContent = "";
+
+  let contacts;
+  try {
+    contacts = await pickContacts();
+  } catch (error) {
+    console.error(error);
+    errorBox.textContent = "Kunde inte öppna kontakterna. Skriv in namnen själv i stället.";
+    return;
+  }
+
+  const existingNames = readPeople().map(person => person.name.toLowerCase());
+  for (const contact of contacts) {
+    if (existingNames.includes(contact.name.toLowerCase())) {
+      continue;
+    }
+    existingNames.push(contact.name.toLowerCase());
+
+    const emptyRow = findEmptyRow();
+    if (emptyRow) {
+      emptyRow.querySelector(".p-name").value = contact.name;
+      emptyRow.querySelector(".p-phone").value = contact.phone;
+    } else {
+      addPersonRow(contact.name, "", contact.phone);
+    }
+  }
+  saveSetup();
+}
+
+// #endregion
 
 // ---------- Lottning ----------
 // Hittar en giltig fördelning: ingen drar sig själv eller någon i samma hushåll.
@@ -619,6 +725,10 @@ function route() {
 
 // ---------- Start ----------
 document.getElementById("addPerson").onclick = () => { addPersonRow(); saveSetup(); };
+document.getElementById("pickContacts").onclick = onPickContacts;
+if (canPickContacts()) {
+  document.getElementById("pickContacts").classList.remove("hidden");
+}
 document.getElementById("drawButton").onclick = onDraw;
 document.getElementById("redraw").onclick = onDraw;
 document.getElementById("togglePairs").onclick = () => {
